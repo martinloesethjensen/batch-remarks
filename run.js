@@ -58,8 +58,39 @@ async function main() {
 
   const tx = api.tx.utility.batch(txns);
 
-  const hash = await tx.signAndSend(account);
-  console.log(`Sent txn with hash: ${hash}`);
+  try {
+    await sendAndFinalize(tx, account);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function sendAndFinalize(tx, account) {
+  return new Promise(async resolve => {
+    let success = false;
+    let included = []
+    let finalized = []
+    let unsubscribe = await tx.signAndSend(account, ({ events = [], status, dispatchError }) => {
+      if (status.isInBlock) {
+        success = dispatchError ? false : true;
+        console.log(`📀 Transaction ${tx.meta.name} included at blockHash ${status.asInBlock} [success = ${success}]`);
+        included = [...events]
+      } else if (status.isBroadcast) {
+        console.log(`🚀 Transaction broadcasted.`);
+      } else if (status.isFinalized) {
+        status.is
+        console.log(`💯 Transaction ${tx.meta.name}(..) Finalized at blockHash ${status.asFinalized}`);
+        finalized = [...events]
+        let hash = status.hash;
+        unsubscribe();
+        resolve({ success, hash, included, finalized })
+      } else if (status.isReady) {
+        // let's not be too noisy..
+      } else {
+        console.log(`🤷 Other status ${status}`)
+      }
+    })
+  })
 }
 
 main()
