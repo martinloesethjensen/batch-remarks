@@ -15,8 +15,8 @@ const options = require("yargs")
     alias: "s",
     type: "string",
     description:
-      "A file with secret keys or seed phrases. It is not saved anywhere.",
-    required: true,
+      "A file with secret keys or seed phrases. It is not saved anywhere. If `--hex-encode` is true then this command is not required.",
+    required: false,
   })
   .option("remarks", {
     type: "string",
@@ -33,15 +33,17 @@ const options = require("yargs")
   .argv;
 
 async function main() {
-  const keys = fs
-    .readFileSync(`${options["secret-keys"]}`, "UTF-8")
-    .split(/\r?\n/)
-    .filter((entry) => entry.trim() != "");
   const remarks = fs
     .readFileSync(`${options["remarks"]}`, "UTF-8")
     .split(/\r?\n/)
     .filter((entry) => entry.trim() != "");
+
   const shouldOutputAsHexEncodedData = options["hex-encode"];
+
+  const keys = !shouldOutputAsHexEncodedData ? fs
+    .readFileSync(`${options["secret-keys"]}`, "UTF-8")
+    .split(/\r?\n/)
+    .filter((entry) => entry.trim() != "") : undefined;
 
   const provider = new WsProvider(options.endpoint);
 
@@ -52,14 +54,18 @@ async function main() {
     }]`
   );
 
-  const keyring = new Keyring({
-    type: "sr25519",
-    ss58Format: api.registry.chainSS58,
-  });
+  let account;
 
-  let account = keyring.addFromUri(keys[0]);
+  if (!shouldOutputAsHexEncodedData) {
+    const keyring = new Keyring({
+      type: "sr25519",
+      ss58Format: api.registry.chainSS58,
+    });
 
-  console.log("🤖 ACCOUNT_ADDRESS:", account.address);
+    account = keyring.addFromUri(keys[0]);
+
+    console.log("🤖 ACCOUNT_ADDRESS:", account.address);
+  }
 
   const txns = remarks.map((entry) => api.tx.system.remark(entry));
 
@@ -70,10 +76,12 @@ async function main() {
     return;
   }
 
-  try {
-    await sendAndFinalize(tx, account);
-  } catch (error) {
-    console.error(error);
+  if (!shouldOutputAsHexEncodedData) {
+    try {
+      await sendAndFinalize(tx, account);
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
 

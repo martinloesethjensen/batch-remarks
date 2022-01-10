@@ -9,7 +9,8 @@ Options:
   -e, --endpoint     The wss endpoint. [Westend = wss://westend-rpc.polkadot.io]
                      [Kusama = wss://kusama-rpc.polkadot.io] [string] [required]
   -s, --secret-keys  A file with secret keys or seed phrases. It is not saved
-                     anywhere.                               [string] [required]
+                     anywhere. If `--hex-encode` is true then this command is
+                     not required.                                      [string]
       --remarks      A file with remarks used for system.remark
                                                              [string] [required]
       --hex-encode   hex-encoded calls without submitting the extrinsic.
