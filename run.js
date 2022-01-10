@@ -24,6 +24,12 @@ const options = require("yargs")
       "A file with remarks used for system.remark",
     required: true,
   })
+  .option('hex-encode', {
+    type: 'boolean',
+    description: 'hex-encoded calls without submitting the extrinsic.',
+    required: false,
+    default: false,
+  })
   .argv;
 
 async function main() {
@@ -35,13 +41,14 @@ async function main() {
     .readFileSync(`${options["remarks"]}`, "UTF-8")
     .split(/\r?\n/)
     .filter((entry) => entry.trim() != "");
+  const shouldOutputAsHexEncodedData = options["hex-encode"];
 
   const provider = new WsProvider(options.endpoint);
 
   const api = await ApiPromise.create({ provider });
 
   console.log(
-    `Connected to node: ${(await api.rpc.system.chain()).toHuman()} [ss58: ${api.registry.chainSS58
+    `📡 Connected to node: ${(await api.rpc.system.chain()).toHuman()} [ss58: ${api.registry.chainSS58
     }]`
   );
 
@@ -57,6 +64,11 @@ async function main() {
   const txns = remarks.map((entry) => api.tx.system.remark(entry));
 
   const tx = api.tx.utility.batch(txns);
+
+  if (shouldOutputAsHexEncodedData) {
+    console.log(`🛠  Hex-encoded call: ${tx.method.toHex()}`);
+    return;
+  }
 
   try {
     await sendAndFinalize(tx, account);
