@@ -8,7 +8,7 @@ const options = require("yargs")
     alias: "e",
     type: "string",
     description:
-      "The wss endpoint. (defaults to westend) [Westend = wss://westend-rpc.polkadot.io] [Kusama = wss://kusama-rpc.polkadot.io]",
+      "The wss endpoint. [Westend = wss://westend-rpc.polkadot.io] [Kusama = wss://kusama-rpc.polkadot.io]",
     required: true,
   })
   .option("secret-keys", {
